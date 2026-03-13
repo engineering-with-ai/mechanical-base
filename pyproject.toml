@@ -1,0 +1,44 @@
+[project]
+name = "mechanical-base"
+version = "1.0.0-beta"
+requires-python = ">=3.13"
+dependencies = [
+    "sympy>=1.13.0",
+    "pint>=0.24.0",
+    "uncertainties>=3.2.0",
+    "numpy>=2.1.0",
+    "scipy>=1.14.0",
+    "matplotlib>=3.9.0",
+    "pydantic>=2.9.2",
+    "pyyaml>=6.0.2",
+    "cadquery>=2.7.0",
+    "gmsh>=4.13.0",
+]
+
+[dependency-groups]
+dev = [
+    "black[d]>=24.10.0",
+    "poethepoet>=0.32.0",
+    "pytest>=8.3.4",
+    "ruff>=0.8.4",
+    "pytest-cov>=6.0.0",
+    "jupyter>=1.0.0",
+    "nbconvert>=7.16.0",
+    "pip>=25.1.1",
+]
+
+[tool.poe.tasks]
+format = "black ."
+lint = "ruff check"
+checks = ["format", "lint"]
+notebook = "jupyter nbconvert --execute --inplace theory.ipynb"
+model = "python cad/model.py"
+drawing = "python cad/drawing.py"
+mesh = "python sim/mesh.py"
+sim = "pytest -vv sim/"
+cover = "pytest -vv --cov sim/"
+review = "claude 'run code-reviewer agent against diff for quality and elegance'"
+commit = "bash -c 'uv run poe checks && uv run poe cover && uv run poe review && git add -A && git cz && git push'"
+
+[tool.coverage.run]
+omit = ["*/test_*.py"]

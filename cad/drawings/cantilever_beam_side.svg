@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="300.0"
+   height="200.0"
+
+>
+    <g transform="scale(7.5, -7.5)   translate(31.666666666666668,-12.666666666666666)" stroke-width="0.13333333333333333"  fill="none">
+       <!-- hidden lines -->
+       <g  stroke="rgb(160,160,160)" fill="none" stroke-dasharray="0.13333333333333333,0.13333333333333333" >
+			<path d="M-5.0,10.0 L5.0,10.0 " />
+			<path d="M5.0,10.0 L5.0,-10.0 " />
+			<path d="M-5.0,-10.0 L5.0,-10.0 " />
+			<path d="M-5.0,10.0 L-5.0,-10.0 " />
+
+       </g>
+
+       <!-- solid lines -->
+       <g  stroke="rgb(0,0,0)" fill="none">
+			<path d="M-5.0,10.0 L5.0,10.0 " />
+			<path d="M5.0,10.0 L5.0,-10.0 " />
+			<path d="M-5.0,-10.0 L5.0,-10.0 " />
+			<path d="M-5.0,10.0 L-5.0,-10.0 " />
+
+       </g>
+    </g>
+    
+</svg>
