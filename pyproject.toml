@@ -32,9 +32,9 @@ format = "black ."
 lint = "ruff check"
 checks = ["format", "lint"]
 notebook = "jupyter nbconvert --execute --inplace theory.ipynb"
-model = "python cad/model.py"
-drawing = "python cad/drawing.py"
-mesh = "python sim/mesh.py"
+model = { cmd = "python cad/model.py", env = { PYTHONPATH = "." } }
+drawing = { cmd = "python cad/drawing.py", env = { PYTHONPATH = "." } }
+mesh = { cmd = "python sim/mesh.py", env = { PYTHONPATH = "." } }
 sim = "pytest -vv sim/"
 cover = "pytest -vv --cov sim/"
 review = "claude 'run code-reviewer agent against diff for quality and elegance'"
