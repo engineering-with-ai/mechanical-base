@@ -6,10 +6,9 @@ checks:
   stage: check
   script:
     - mkdir -p sim/results
-    - uv run poe model
-    - uv run poe mesh
     - uv run poe checks
     - uv run poe notebook
+    - uv run poe build
     - uv run pytest --junitxml=junit.xml
     - uv run poe cover
     - uv run coverage xml
