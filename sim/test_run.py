@@ -8,7 +8,7 @@ from sim.constants import (
     YOUNGS_MODULUS,
     ureg,
 )
-from sim.solve import solve
+from sim.model import solve
 
 
 def _expected_deflection_mm() -> float:
@@ -38,10 +38,10 @@ class TestCantileverBeam:
         expected_mm = _expected_deflection_mm()
 
         # act
-        result = solve()
+        max_deflection_mm, _ = solve()
 
         # assert
-        assert result.max_deflection_mm == pytest.approx(expected_mm, rel=0.05)
+        assert max_deflection_mm == pytest.approx(expected_mm, rel=0.05)
 
     def test_max_bending_stress(self) -> None:
         """FEM max stress matches analytical M*c/I within 10%."""
@@ -49,7 +49,7 @@ class TestCantileverBeam:
         expected_mpa = _expected_stress_mpa()
 
         # act
-        result = solve()
+        _, max_stress_mpa = solve()
 
         # assert
-        assert result.max_stress_mpa == pytest.approx(expected_mpa, rel=0.10)
+        assert max_stress_mpa == pytest.approx(expected_mpa, rel=0.10)

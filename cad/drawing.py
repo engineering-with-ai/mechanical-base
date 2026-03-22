@@ -10,7 +10,7 @@ from cadquery import exporters
 
 from cad.model import build_beam
 
-DRAWINGS_DIR = Path("cad/drawings")
+DRAWINGS_DIR = Path("spec/drawings")
 
 # Reason: standard engineering drawing projections
 VIEWS = {

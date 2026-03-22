@@ -12,7 +12,7 @@ dependencies = [
     "pydantic>=2.9.2",
     "pyyaml>=6.0.2",
     "cadquery>=2.7.0",
-    "gmsh>=4.13.0",
+    "pygccx @ git+https://github.com/calculix/pygccx.git",
 ]
 
 [dependency-groups]
@@ -32,10 +32,9 @@ format = "black ."
 lint = "ruff check"
 checks = ["format", "lint"]
 notebook = "jupyter nbconvert --execute --inplace theory.ipynb"
-model = { cmd = "python cad/model.py", env = { PYTHONPATH = "." } }
-drawing = { cmd = "python cad/drawing.py", env = { PYTHONPATH = "." } }
-sch-pdf = "bash -c 'DISPLAY= PYTHONPATH=/usr/lib/freecad/lib:. xvfb-run -a python3 cad/export_drawing.py'"
-mesh = { cmd = "python sim/mesh.py", env = { PYTHONPATH = "." } }
+build = { cmd = "python cad/model.py", env = { PYTHONPATH = "." } }
+inspect = "freecad cad/cantilever_beam.step"
+export = { cmd = "python cad/drawing.py", env = { PYTHONPATH = "." } }
 sim = "pytest -vv sim/"
 cover = "pytest -vv --cov sim/"
 review = "claude 'run code-reviewer agent against diff for quality and elegance'"
