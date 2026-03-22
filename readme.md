@@ -22,34 +22,32 @@ graph LR
 ## Workflow
 
 ```
-theory.ipynb (sympy derivation + expected values) -> cad/ (CadQuery STEP) -> sim/ (gmsh mesh -> CalculiX FEM) -> pytest (assert FEM matches theory)
+theory.ipynb (sympy + pint) -> cad/model.py (CadQuery -> STEP) -> sim/model.py (pygccx -> CalculiX FEM) -> pytest (assert FEM matches theory)
 ```
 
-1. `theory.ipynb` derives deflection and stress symbolically, plugs in actual parameters with pint + uncertainties to produce expected values
+1. `theory.ipynb` derives deflection and stress symbolically, plugs in actual parameters with pint + uncertainties
 2. `cad/model.py` generates the parametric beam geometry via CadQuery, exports STEP
-3. `sim/mesh.py` meshes the STEP with gmsh (C3D4 linear tets)
-4. `sim/solve.py` writes the CalculiX input deck (BCs, material, loading), runs ccx
-5. `sim/test_run.py` asserts FEM deflection and stress match analytical values within tolerance
+3. `sim/model.py` meshes STEP with gmsh, builds CalculiX model via pygccx, solves, extracts results
+4. `sim/test_run.py` asserts FEM deflection and stress match analytical values within tolerance
 
 ## Quick Start
 
 ```bash
 uv sync
-uv run poe model        # CadQuery -> STEP
-uv run poe mesh          # gmsh -> mesh INP
-uv run poe checks        # format + lint
+uv run poe checks       # ruff format + lint
 uv run poe notebook      # execute theory.ipynb
-uv run poe sim           # pytest
+uv run poe build         # CadQuery -> STEP
+uv run poe sim           # pygccx + pytest
+uv run poe inspect       # open STEP in FreeCAD
+uv run poe export        # CadQuery SVG drawings -> spec/drawings/
 ```
 
 ## Structure
 
 - `theory.ipynb` — sympy derivation, pint + uncertainties, expected values
 - `sim/constants.py` — physical parameters with units, tolerances, and sources
-- `sim/mesh.py` — gmsh meshing of STEP geometry
-- `sim/inp_writer.py` — assembles CalculiX input deck from mesh + BCs + material
-- `sim/solve.py` — runs CalculiX, parses results
-- `sim/frd_parser.py` — reads CalculiX .frd output for displacement + stress
+- `sim/model.py` — pygccx: mesh + CalculiX solve + result extraction
 - `sim/test_run.py` — pytest assertions: tip deflection (5%), bending stress (10%)
 - `cad/model.py` — CadQuery parametric beam geometry
-- `spec/` — output artifacts (drawings, PDFs)
+- `cad/drawing.py` — CadQuery SVG projections (front, side, iso)
+- `spec/drawings/` — exported SVG/PDF drawings
