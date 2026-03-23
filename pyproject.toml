@@ -35,7 +35,7 @@ notebook = "jupyter nbconvert --execute --inplace theory.ipynb"
 build = { cmd = "python cad/model.py", env = { PYTHONPATH = "." } }
 inspect-model = "bash -c 'nohup freecad cad/l_bracket.step &>/dev/null &'"
 inspect-asm = { cmd = "python cad/assembly.py && nohup freecad cad/l_bracket_assy.step &>/dev/null &", env = { PYTHONPATH = "." } }
-drawings = { cmd = "python cad/drawing.py", env = { PYTHONPATH = "." } }
+drawings = "bash -c 'PYTHONPATH=. python cad/drawing.py && DISPLAY= PYTHONPATH=/usr/lib/freecad/lib:. xvfb-run -a python3 cad/export_drawing.py'"
 validate-model = { cmd = "python cad/validate.py", env = { PYTHONPATH = "." } }
 sim = "pytest -vv sim/"
 cover = "pytest -vv --cov sim/"

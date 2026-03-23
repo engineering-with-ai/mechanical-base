@@ -32,8 +32,10 @@ def export_views() -> list[Path]:
             bracket,
             str(svg_path),
             opt={
-                "width": 300,
-                "height": 200,
+                "width": 400,
+                "height": 400,
+                "marginLeft": 20,
+                "marginTop": 20,
                 "showHidden": True,
                 **opts,
             },
