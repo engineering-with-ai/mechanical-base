@@ -1,14 +1,14 @@
-"""Export cantilever beam drawing views via CadQuery SVG export.
+"""Export L-bracket drawing views via CadQuery SVG export.
 
 Generates front, side, and isometric projection SVGs directly from
-the CadQuery model. No FreeCAD dependency required.
+the CadQuery model.
 """
 
 from pathlib import Path
 
 from cadquery import exporters
 
-from cad.model import build_beam
+from cad.model import build_bracket
 
 DRAWINGS_DIR = Path("spec/drawings")
 
@@ -21,19 +21,15 @@ VIEWS = {
 
 
 def export_views() -> list[Path]:
-    """Export beam projections as SVG files.
-
-    Returns:
-        List of exported SVG file paths
-    """
+    """Export bracket projections as SVG files."""
     DRAWINGS_DIR.mkdir(parents=True, exist_ok=True)
-    beam = build_beam()
+    bracket = build_bracket()
 
     exported: list[Path] = []
     for name, opts in VIEWS.items():
-        svg_path = DRAWINGS_DIR / f"cantilever_beam_{name}.svg"
+        svg_path = DRAWINGS_DIR / f"l_bracket_{name}.svg"
         exporters.export(
-            beam,
+            bracket,
             str(svg_path),
             opt={
                 "width": 300,

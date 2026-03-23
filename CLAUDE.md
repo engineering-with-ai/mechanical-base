@@ -248,14 +248,52 @@ with ccx_model.Model(CCX_PATH, CGX_PATH, jobname="part", working_dir=wkd) as mod
 
 ### Poe Tasks (standardized across all templates)
 
-| Task | Command | What it does |
-|------|---------|-------------|
-| checks | `uv run poe checks` | ruff format + lint |
-| notebook | `uv run poe notebook` | execute theory.ipynb |
-| build | `uv run poe build` | CadQuery → STEP |
-| sim | `uv run poe sim` | pygccx + pytest |
-| inspect | `uv run poe inspect` | open STEP in FreeCAD |
-| export | `uv run poe export` | CadQuery SVG drawings → spec/ |
-| validate | `uv run poe validate` | mesh convergence checks |
+| Task | What it does |
+|------|-------------|
+| checks | ruff format + lint |
+| notebook | execute theory.ipynb |
+| build | generate code-driven artifacts (STEP) |
+| sim | simulation + pytest assertions |
+| validate-model | design rule checks (BRep+bbox) |
+| inspect-model | open single model GUI (part) |
+| inspect-asm | open assembly GUI (multi-body STEP) |
+| drawings | export SVG/PDF to spec/drawings/ |
+| cover | pytest + coverage |
+| review | AI code review |
+| commit | full pipeline → push |
+
+
+### CadQuery Gotchas
+
+- **Never use `.faces()` selectors for hole placement.** CadQuery's `<X`/`>X` face selectors pick faces by center coordinate, which is ambiguous on L-shapes and complex geometry. Instead, cut holes explicitly with `.cut()` using cylinders at known 3D coordinates.
+- **CadQuery `.fillet()` on `edges("|Y")` fillets ALL Y-parallel edges.** Use `.filter(lambda edge: ...)` with bounding box checks to target a specific edge.
+- **CadQuery `extrude()` on XZ workplane goes in -Y direction.** Account for this when computing 3D positions for downstream operations.
+- **CadQuery color names are limited.** Use `cq.Color(r, g, b)` with floats 0-1 instead of named colors — many common names like `"darkgray"` are not recognized.
+- **CadQuery Assembly**: `assy.add(part, loc=cq.Location((x,y,z), (rx,ry,rz)))` for positioning. Rotation is Euler angles in degrees.
+
+
+### gmsh / OCC Geometry Gotchas
+
+- **OCC splits cylindrical hole surfaces into half-cylinders.** A through-hole produces 2 cylinder faces, each with area ≈ π·d·t/2. Detect by matching half the expected area, not full.
+- **Use `gmsh.model.getType(dim, tag)` to distinguish surface types.** Returns `"Cylinder"`, `"Plane"`, `"BSpline"`, etc. Filter by type before checking area or bbox to avoid false matches (e.g. fillet cylinders vs bolt hole cylinders).
+- **Use `gmsh.model.occ.getMass(dim, tag)` for surface area.** This is the reliable way to get face area for identification — more robust than bbox dimensions.
+- **Fillet surfaces are also cylinders in OCC.** A 90° fillet of radius r across width w has area = π·r·w/2. Distinguish from bolt holes by area magnitude.
+
+
+### pygccx Reaction Force Extraction
+
+- **Request reaction forces with `sk.NodeFile([enums.ENodeFileResults.RF])`** in the step keywords. Results appear in FRD as `enums.EFrdEntities.FORC`.
+- **Split constrained nodes by coordinate to get per-feature forces.** Sum reaction vectors per group, then take magnitude for the resultant.
+- **Fixing all DOFs on cylindrical hole surfaces models a rigid pin.** This over-constrains vs real bolted connections. Expect FEM bolt forces to be 15-25% lower than rigid-bracket hand calcs — the hand calc is intentionally conservative for design.
+
+
+### Hand Calc vs FEM Tolerance Guidelines
+
+| Comparison | Typical tolerance | Reason |
+|---|---|---|
+| Simple beam (Euler-Bernoulli vs FEM) | 5-10% | Closed-form is exact for prismatic beams |
+| Bolt group (rigid assumption vs FEM) | 20-25% | Rigid bracket assumption is conservative by design |
+| Stress at geometric discontinuities | 10-15% | Mesh-dependent near fillets, holes, corners |
+| Global equilibrium (total reaction vs applied load) | < 1% | Must hold — if not, model is broken |
 
 

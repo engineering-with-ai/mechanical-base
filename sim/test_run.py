@@ -1,55 +1,45 @@
+"""Assertions for L-bracket bolted connection FEM analysis.
+
+Validates bolt reaction forces against bolt group hand calc,
+and bracket stress against yield.
+"""
+
 import pytest
 
 from sim.constants import (
-    BEAM_HEIGHT,
-    BEAM_LENGTH,
-    POINT_LOAD,
-    SECOND_MOMENT,
-    YOUNGS_MODULUS,
+    CRITICAL_BOLT_FORCE,
+    YIELD_STRESS,
     ureg,
 )
 from sim.model import solve
 
 
-def _expected_deflection_mm() -> float:
-    """Euler-Bernoulli: delta = P*L^3 / (3*E*I)."""
-    p = POINT_LOAD.to(ureg.N).magnitude
-    l = BEAM_LENGTH.to(ureg.mm).magnitude
-    e = YOUNGS_MODULUS.magnitude.nominal_value * 1e3  # GPa -> MPa for mm units
-    i = SECOND_MOMENT.magnitude
-    return p * l**3 / (3 * e * i)
-
-
-def _expected_stress_mpa() -> float:
-    """Bending stress: sigma = P*L*c / I."""
-    p = POINT_LOAD.to(ureg.N).magnitude
-    l = BEAM_LENGTH.to(ureg.mm).magnitude
-    c = BEAM_HEIGHT.to(ureg.mm).magnitude / 2
-    i = SECOND_MOMENT.magnitude
-    return p * l * c / i
-
-
-class TestCantileverBeam:
+class TestLBracket:
     """Assertions against theory.ipynb expected values."""
 
-    def test_tip_deflection(self) -> None:
-        """FEM tip deflection matches Euler-Bernoulli within 5%."""
+    def test_bolt_reaction_force(self) -> None:
+        """FEM critical bolt reaction vs bolt group hand calc within 25%.
+
+        Reason: hand calc assumes rigid bracket (conservative), FEM captures
+        bracket flexibility which redistributes load. 25% tolerance accounts
+        for this modeling difference.
+        """
         # arrange
-        expected_mm = _expected_deflection_mm()
+        expected_n = CRITICAL_BOLT_FORCE.to(ureg.N).magnitude
 
         # act
-        max_deflection_mm, _ = solve()
+        bolt_force_n, _ = solve()
 
         # assert
-        assert max_deflection_mm == pytest.approx(expected_mm, rel=0.05)
+        assert bolt_force_n == pytest.approx(expected_n, rel=0.25)
 
-    def test_max_bending_stress(self) -> None:
-        """FEM max stress matches analytical M*c/I within 10%."""
+    def test_bracket_stress_below_yield(self) -> None:
+        """Peak von Mises stress is below yield (safety factor > 1)."""
         # arrange
-        expected_mpa = _expected_stress_mpa()
+        yield_mpa = YIELD_STRESS.to(ureg.MPa).magnitude
 
         # act
         _, max_stress_mpa = solve()
 
         # assert
-        assert max_stress_mpa == pytest.approx(expected_mpa, rel=0.10)
+        assert max_stress_mpa < yield_mpa
