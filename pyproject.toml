@@ -1,5 +1,5 @@
 [project]
-name = "mechanical-base"
+name = "mechanical-model"
 version = "1.0.0-beta"
 requires-python = "==3.13.2"
 dependencies = [

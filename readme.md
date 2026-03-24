@@ -1,7 +1,7 @@
-# mechanical-base
+# mechanical-model
 
-![](https://img.shields.io/gitlab/pipeline-status/engineering-with-ai/mechanical-base?branch=main&logo=gitlab)
-![](https://gitlab.com/engineering-with-ai/mechanical-base/badges/main/coverage.svg)
+![](https://img.shields.io/gitlab/pipeline-status/engineering-with-ai/mechanical-model?branch=main&logo=gitlab)
+![](https://gitlab.com/engineering-with-ai/mechanical-model/badges/main/coverage.svg)
 
 L-bracket bolted connection — verifies bolt reaction forces and bracket stress for a steel L-bracket bolted to a wall plate under a vertical point load.
 
