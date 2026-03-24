@@ -5,8 +5,6 @@ Export path: TechDraw SVG → rsvg-convert → PDF (bypasses Qt's thick
 stroke rendering in exportPageAsPdf).
 """
 
-import os
-import shutil
 import time
 from pathlib import Path
 
