@@ -15,7 +15,7 @@ from pygccx import model_keywords as mk
 from pygccx import step_keywords as sk
 from pygccx.tools import stress_tools as st
 
-from cad.model import STEP_PATH
+from cad.model.model import STEP_PATH
 from sim.constants import (
     APPLIED_LOAD,
     BRACKET_THICKNESS,

@@ -5,7 +5,7 @@ Checks BRep validity, bounding box vs constants, and positive volume.
 
 import pytest
 
-from cad.model import build_bracket
+from cad.model.model import build_bracket
 from sim.constants import (
     BRACKET_THICKNESS,
     BRACKET_WIDTH,

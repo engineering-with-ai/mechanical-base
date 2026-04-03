@@ -1,4 +1,4 @@
-# mechanical-model
+# [mechanical-model] 🔩
 
 ![](https://img.shields.io/gitlab/pipeline-status/engineering-with-ai/mechanical-model?branch=main&logo=gitlab)
 ![](https://gitlab.com/engineering-with-ai/mechanical-model/badges/main/coverage.svg)
@@ -48,17 +48,17 @@ uv run poe build            # CadQuery -> STEP
 uv run poe sim              # pygccx + pytest (2/2 tests)
 uv run poe validate-model   # BRep validity + bbox vs constants
 uv run poe inspect-model    # open bracket in FreeCAD
+uv run poe generate-model   # CadQuery SVG projections -> output/drawings/
 uv run poe inspect-asm      # open assembly in FreeCAD
-uv run poe drawings         # CadQuery SVG drawings -> spec/drawings/
+uv run poe generate-asm     # FreeCAD TechDraw PDF -> output/drawings/
 ```
 
 ## Structure
 
 - `theory.ipynb` — sympy bolt group derivation, pint + uncertainties, expected values
-- `sim/constants.py` — bracket/bolt dimensions, material, load, derived bolt group values
-- `sim/model.py` — pygccx: mesh + CalculiX solve + result extraction
-- `sim/test_run.py` — pytest: bolt force (25%), stress below yield
-- `cad/model.py` — CadQuery parametric L-bracket geometry
-- `cad/assembly.py` — CadQuery Assembly: bracket + wall plate + bolts
-- `cad/drawing.py` — CadQuery SVG projections (front, side, iso)
-- `spec/drawings/` — exported SVG drawings
+- `sim/` — simulation + pytest assertions against theory
+- `cad/model/` — CadQuery geometry (model.py, assembly.py, validate_model.py, validate_asm.py)
+- `cad/drawing/` — drawing exports (CadQuery SVG projections, FreeCAD TechDraw PDF)
+- `cad/layout_spec.yaml` — drawing layout declaration (sheet size, views, title block)
+- `cad/model/templates/` — EWAI drawing sheet template
+- `output/` — generated deliverables: drawings/

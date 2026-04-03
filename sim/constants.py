@@ -18,7 +18,7 @@ Q_ = ureg.Quantity
 VERTICAL_LEG_HEIGHT: Final = 80.0 * ureg.mm
 HORIZONTAL_LEG_LENGTH: Final = 60.0 * ureg.mm
 BRACKET_WIDTH: Final = 50.0 * ureg.mm
-BRACKET_THICKNESS: Final = 5.0 * ureg.mm
+BRACKET_THICKNESS: Final = 14.0 * ureg.mm
 FILLET_RADIUS: Final = 8.0 * ureg.mm
 
 # --- Bolt holes ---
@@ -28,11 +28,12 @@ HOLE_DIAMETER: Final = 8.5 * ureg.mm  # M8 clearance, ISO 273
 BOLT_SPACING: Final = 50.0 * ureg.mm  # center-to-center vertical distance
 NUM_BOLTS: Final = 2
 
-# --- Material: ASTM A36 structural steel ---
-# Reason: most common structural steel, Roark's 8th ed. Table A.5
-YOUNGS_MODULUS: Final = ufloat(200.0, 4.0) * ureg.GPa
-POISSONS_RATIO: Final = 0.3 * ureg.dimensionless
-YIELD_STRESS: Final = 250.0 * ureg.MPa  # ASTM A36 minimum yield
+# --- Material: Nylon PA12 (HP Multi Jet Fusion) ---
+# Reason: most common structural 3D print material for functional parts.
+# Source: HP 3D High Reusability PA 12 datasheet (4AA8-2745ENW)
+YOUNGS_MODULUS: Final = ufloat(1.7, 0.1) * ureg.GPa  # 1700 MPa XY, 1800 Z
+POISSONS_RATIO: Final = 0.4 * ureg.dimensionless  # typical for nylon
+YIELD_STRESS: Final = 48.0 * ureg.MPa  # tensile strength (no sharp yield point)
 
 # --- Loading ---
 APPLIED_LOAD: Final = 500.0 * ureg.N  # vertical, downward at free end

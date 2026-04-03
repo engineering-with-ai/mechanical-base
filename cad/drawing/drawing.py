@@ -1,43 +1,42 @@
-"""Export L-bracket drawing views via CadQuery SVG export.
+"""Export drawing views via CadQuery SVG export.
 
-Generates front, side, and isometric projection SVGs directly from
-the CadQuery model.
+Reads view definitions from layout_spec.yaml.
 """
 
 from pathlib import Path
 
+import yaml
 from cadquery import exporters
 
-from cad.model import build_bracket
+from cad.model.model import build_bracket
 
-DRAWINGS_DIR = Path("spec/drawings")
+LAYOUT_SPEC_PATH = Path("cad/layout_spec.yaml")
+DRAWINGS_DIR = Path("output/drawings")
 
-# Reason: standard engineering drawing projections
-VIEWS = {
-    "front": {"projectionDir": (0, -1, 0)},
-    "side": {"projectionDir": (1, 0, 0)},
-    "iso": {"projectionDir": (1, -1, 1)},
-}
+
+def _load_spec() -> dict:
+    return yaml.safe_load(LAYOUT_SPEC_PATH.read_text())
 
 
 def export_views() -> list[Path]:
     """Export bracket projections as SVG files."""
+    spec = _load_spec()
     DRAWINGS_DIR.mkdir(parents=True, exist_ok=True)
     bracket = build_bracket()
 
     exported: list[Path] = []
-    for name, opts in VIEWS.items():
+    for name, view in spec["views"].items():
         svg_path = DRAWINGS_DIR / f"l_bracket_{name}.svg"
         exporters.export(
             bracket,
             str(svg_path),
             opt={
-                "width": 400,
-                "height": 400,
+                "width": view.get("width", 400),
+                "height": view.get("height", 400),
                 "marginLeft": 20,
                 "marginTop": 20,
                 "showHidden": True,
-                **opts,
+                "projectionDir": tuple(view["projection_dir"]),
             },
         )
         exported.append(svg_path)

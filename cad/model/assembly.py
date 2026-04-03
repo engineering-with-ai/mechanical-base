@@ -44,7 +44,7 @@ def build_bolt() -> cq.Workplane:
 
 def build_assembly() -> cq.Assembly:
     """Assemble bracket, wall plate, and 2 bolts."""
-    from cad.model import build_bracket
+    from cad.model.model import build_bracket
 
     h = VERTICAL_LEG_HEIGHT.to(ureg.mm).magnitude
     w = BRACKET_WIDTH.to(ureg.mm).magnitude

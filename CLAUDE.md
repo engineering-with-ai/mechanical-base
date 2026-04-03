@@ -254,10 +254,12 @@ with ccx_model.Model(CCX_PATH, CGX_PATH, jobname="part", working_dir=wkd) as mod
 | notebook | execute theory.ipynb |
 | build | generate code-driven artifacts (STEP) |
 | sim | simulation + pytest assertions |
-| validate-model | design rule checks (BRep+bbox) |
-| inspect-model | open single model GUI (part) |
-| inspect-asm | open assembly GUI (multi-body STEP) |
-| drawings | export SVG/PDF to spec/drawings/ |
+| validate-model | BRep validity + bbox vs constants |
+| validate-asm | assembly validation |
+| inspect-model | open part in FreeCAD |
+| inspect-asm | open assembly in FreeCAD |
+| generate-model | CadQuery SVG projections to output/drawings/ |
+| generate-asm | FreeCAD TechDraw PDF to output/drawings/ |
 | cover | pytest + coverage |
 | review | AI code review |
 | commit | full pipeline → push |
