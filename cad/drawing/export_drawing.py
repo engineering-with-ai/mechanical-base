@@ -175,7 +175,14 @@ def export_drawing() -> Path:
         check=True,
     )
 
+    # DXF export for CNC shops — geometry + dimensions, no title block
+    dxf_path = DRAWINGS_DIR / "l_bracket.dxf"
+    import TechDraw
+
+    TechDraw.writeDXFPage(page, str(dxf_path))
+
     print(f"Exported {pdf_path} ({pdf_path.stat().st_size} bytes)")
+    print(f"Exported {dxf_path} ({dxf_path.stat().st_size} bytes)")
     return pdf_path
 
 
