@@ -18,8 +18,17 @@ def _load_spec() -> dict:
     return yaml.safe_load(LAYOUT_SPEC_PATH.read_text())
 
 
-def export_views() -> list[Path]:
-    """Export bracket projections as SVG files."""
+def export_views(single_views: bool = False) -> list[Path]:
+    """Export bracket projections as SVG files.
+
+    Args:
+        single_views: if True, export individual front/side/iso SVGs.
+            Default False — only used for debugging or web assets.
+    """
+    if not single_views:
+        print("Skipping single-view SVGs (pass --single-views to enable)")
+        return []
+
     spec = _load_spec()
     DRAWINGS_DIR.mkdir(parents=True, exist_ok=True)
     bracket = build_bracket()
@@ -46,5 +55,8 @@ def export_views() -> list[Path]:
 
 
 if __name__ == "__main__":
-    paths = export_views()
+    import sys
+
+    single = "--single-views" in sys.argv
+    paths = export_views(single_views=single)
     print(f"Generated {len(paths)} drawing views")

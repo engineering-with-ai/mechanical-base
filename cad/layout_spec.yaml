@@ -30,3 +30,13 @@ techdraw:
   padding: 15
   gap: 20
   projections: ["Front", "Right", "Top", "FrontTopRight"]
+
+tolerances:
+  general: "ISO 2768-m"
+  holes:
+    fit_class: "H9"
+    over_tolerance: 0.036
+    under_tolerance: 0.0
+  bolt_spacing:
+    tolerance: 0.1
+  surface_finish: "As-printed (HP MJF)"

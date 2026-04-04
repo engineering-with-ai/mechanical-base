@@ -6,6 +6,7 @@ Generates an L-bracket with fillet and bolt holes, exports to STEP.
 import cadquery as cq
 
 from sim.constants import (
+    BOLT_PATTERN_Z_BOTTOM,
     BOLT_SPACING,
     BRACKET_THICKNESS,
     BRACKET_WIDTH,
@@ -48,13 +49,14 @@ def build_bracket() -> cq.Workplane:
         bracket.edges("|Y").filter(lambda edge: _is_inner_bend_edge(edge, t)).fillet(r)
     )
 
-    # Reason: cut bolt holes through vertical leg using explicit 3D positions
-    # Bracket extrudes in -Y, so Y center = -w/2
-    # Bolt holes centered on vertical leg width, spaced vertically about h/2
+    # Reason: cut bolt holes through vertical leg using explicit 3D positions.
+    # Bracket extrudes in -Y, so Y center = -w/2.
+    # Bottom hole offset up from inner bend to clear M8 bolt head + washer.
+    z_bottom = BOLT_PATTERN_Z_BOTTOM.to(ureg.mm).magnitude
     hole_center_x = t / 2
     hole_center_y = -w / 2
-    hole_z_lower = h / 2 - bolt_sp / 2
-    hole_z_upper = h / 2 + bolt_sp / 2
+    hole_z_lower = z_bottom
+    hole_z_upper = z_bottom + bolt_sp
 
     for z_pos in [hole_z_lower, hole_z_upper]:
         hole_cyl = (

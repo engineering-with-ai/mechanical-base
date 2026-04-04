@@ -22,11 +22,16 @@ BRACKET_THICKNESS: Final = 14.0 * ureg.mm
 FILLET_RADIUS: Final = 8.0 * ureg.mm
 
 # --- Bolt holes ---
-# Reason: M8 clearance hole per ISO 273, 2 bolts symmetric about bracket centerline
+# Reason: M8 clearance hole per ISO 273, 2 bolts spaced vertically
 BOLT_DIAMETER: Final = 8.0 * ureg.mm  # M8 nominal
 HOLE_DIAMETER: Final = 8.5 * ureg.mm  # M8 clearance, ISO 273
-BOLT_SPACING: Final = 50.0 * ureg.mm  # center-to-center vertical distance
+BOLT_SPACING: Final = 40.0 * ureg.mm  # center-to-center vertical distance
 NUM_BOLTS: Final = 2
+
+# Reason: bottom hole must clear the inner bend for bolt head + washer.
+# M8 washer OD = 16mm → 8mm radius + 2mm safety = 10mm from inner bend (z=t).
+# Bottom hole at t + 10mm = 24mm, top hole at 24 + 40 = 64mm.
+BOLT_PATTERN_Z_BOTTOM: Final = (BRACKET_THICKNESS + 10.0 * ureg.mm).to(ureg.mm)
 
 # --- Material: Nylon PA12 (HP Multi Jet Fusion) ---
 # Reason: most common structural 3D print material for functional parts.

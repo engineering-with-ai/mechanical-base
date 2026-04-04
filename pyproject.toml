@@ -17,6 +17,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "black[d]>=26.3.1",
     "poethepoet>=0.32.0",
     "pytest>=8.3.4",
     "ruff>=0.8.4",
@@ -27,15 +28,15 @@ dev = [
 ]
 
 [tool.poe.tasks]
-format = "ruff format"
+format = "black ."
 lint = "ruff check"
 checks = ["format", "lint"]
 notebook = "jupyter nbconvert --execute --inplace theory.ipynb"
 build = { cmd = "python cad/model/model.py", env = { PYTHONPATH = "." } }
 inspect-model = "bash -c 'nohup freecad cad/l_bracket.step &>/dev/null &'"
 inspect-asm = { cmd = "python cad/model/assembly.py && nohup freecad cad/l_bracket_assy.step &>/dev/null &", env = { PYTHONPATH = "." } }
-generate-model = { cmd = "python cad/drawing/drawing.py", env = { PYTHONPATH = "." } }
-generate-asm = "bash -c 'mkdir -p output/fab && DISPLAY= PYTHONPATH=/usr/lib/freecad/lib:. xvfb-run -a python3 cad/drawing/export_drawing.py && cp cad/l_bracket.step output/fab/ && cp cad/l_bracket_assy.step output/fab/ && echo \"Copied STEP files to output/fab/\"'"
+generate-model = "bash -c 'mkdir -p output/drawings && DISPLAY= PYTHONPATH=/usr/lib/freecad/lib:. xvfb-run -a python3 cad/drawing/export_drawing.py'"
+generate-asm = { cmd = "bash -c 'mkdir -p output/fab && python cad/model/assembly.py && cp cad/l_bracket.step output/fab/ && cp cad/l_bracket_assy.step output/fab/ && echo \"Copied STEP + assembly to output/fab/\"'", env = { PYTHONPATH = "." } }
 validate-model = { cmd = "python cad/model/validate_model.py", env = { PYTHONPATH = "." } }
 validate-asm = { cmd = "python cad/model/validate_asm.py", env = { PYTHONPATH = "." } }
 sim = "pytest -vv sim/"

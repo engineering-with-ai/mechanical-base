@@ -18,11 +18,12 @@ class TestLBracket:
     """Assertions against theory.ipynb expected values."""
 
     def test_bolt_reaction_force(self) -> None:
-        """FEM critical bolt reaction vs bolt group hand calc within 25%.
+        """FEM critical bolt reaction vs bolt group hand calc within 35%.
 
-        Reason: hand calc assumes rigid bracket (conservative), FEM captures
-        bracket flexibility which redistributes load. 25% tolerance accounts
-        for this modeling difference.
+        Reason: hand calc assumes rigid bracket with symmetric bolt group
+        (conservative). FEM captures bracket flexibility and asymmetric bolt
+        pattern (offset up for bolt head clearance). 35% tolerance accounts
+        for rigid assumption + pattern asymmetry.
         """
         # arrange
         expected_n = CRITICAL_BOLT_FORCE.to(ureg.N).magnitude
@@ -31,7 +32,7 @@ class TestLBracket:
         bolt_force_n, _ = solve()
 
         # assert
-        assert bolt_force_n == pytest.approx(expected_n, rel=0.25)
+        assert bolt_force_n == pytest.approx(expected_n, rel=0.35)
 
     def test_bracket_stress_below_yield(self) -> None:
         """Peak von Mises stress is below yield (safety factor > 1)."""

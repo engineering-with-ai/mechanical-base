@@ -1,6 +1,6 @@
 """Export engineering drawing as PDF via FreeCAD TechDraw.
 
-Uses DrawProjGroup for auto-layout of standard projection views.
+Uses individual DrawViewPart objects for full position control.
 Export path: TechDraw SVG -> rsvg-convert -> PDF (bypasses Qt's thick
 stroke rendering in exportPageAsPdf).
 
@@ -19,15 +19,6 @@ import Part  # noqa: E402
 import subprocess  # noqa: E402
 import TechDrawGui  # noqa: E402
 import yaml  # noqa: E402
-
-# ISO 216 landscape dimensions (width, height) in mm
-SHEET_DIMS = {
-    "A4": (297, 210),
-    "A3": (420, 297),
-    "A2": (594, 420),
-    "A1": (841, 594),
-    "A0": (1189, 841),
-}
 
 STEP_FILE = Path("cad/l_bracket.step")
 TEMPLATES_DIR = Path("cad/model/templates")
@@ -49,13 +40,74 @@ def _resolve_template(sheet_size: str) -> Path:
     return template
 
 
+def _export_web_svg(sheet_svg: Path, web_svg: Path) -> None:
+    """Strip template (border + title block) from TechDraw SVG.
+
+    Keeps only the DrawingContent group (views + dimensions) and fits
+    the viewBox to the content bounding box.
+    """
+    import xml.etree.ElementTree as ET
+
+    ET.register_namespace("", "http://www.w3.org/2000/svg")
+    tree = ET.parse(sheet_svg)
+    root = tree.getroot()
+    ns = {"svg": "http://www.w3.org/2000/svg"}
+
+    page_g = root.find(".//svg:g[@id='Page']", ns)
+    if page_g is None:
+        return
+
+    # Reason: remove the template group (first child), keep DrawingContent
+    for child in list(page_g):
+        child_id = child.get("id", "")
+        if child_id != "DrawingContent":
+            page_g.remove(child)
+
+    # Reason: fit viewBox to content — DrawingContent uses absolute coords
+    content = page_g.find("svg:g[@id='DrawingContent']", ns)
+    if content is not None:
+        root.set("viewBox", "0 0 4200 2970")
+
+    tree.write(web_svg, xml_declaration=True, encoding="UTF-8")
+    print(f"Exported {web_svg}")
+
+
+def _export_dark_svg(web_svg: Path, dark_svg: Path) -> None:
+    """Create dark-mode SVG (white lines on transparent background) from web SVG."""
+    svg = web_svg.read_text()
+    # Reason: swap black strokes/fills to white. Handles both XML attributes
+    # (FreeCAD: stroke="black") and CSS properties (KiCad: stroke:#000000).
+    # Reason: full black↔white inversion. Placeholder avoids double-swap.
+    svg = svg.replace("#ffffff", "#__WHITE__")
+    svg = svg.replace("#000000", "#ffffff")
+    svg = svg.replace("#__WHITE__", "#000000")
+    svg = svg.replace('"black"', '"__BLACK__"')
+    svg = svg.replace('"white"', '"black"')
+    svg = svg.replace('"__BLACK__"', '"white"')
+    # Reason: insert black background rect. CSS background on <svg> is
+    # unreliable across viewers, so use an explicit rect element.
+    svg = svg.replace(
+        '<g fill="none"',
+        '<rect width="100%" height="100%" fill="black"/>\n<g fill="none"',
+        1,
+    )
+    dark_svg.write_text(svg)
+    print(f"Exported {dark_svg}")
+
+
+def _wait_for_gui(iterations: int = 10):
+    """Wait for FreeCAD HLR and GUI to settle."""
+    for _ in range(iterations):
+        Gui.updateGui()
+        time.sleep(0.3)
+
+
 def export_drawing() -> Path:
     """Build TechDraw page with auto-layout and export as PDF."""
     spec = _load_spec()
     title_block = spec["title_block"]
     td = spec["techdraw"]
     template_path = _resolve_template(spec["sheet_size"])
-
     DRAWINGS_DIR.mkdir(parents=True, exist_ok=True)
 
     doc = App.newDocument("bracket")
@@ -76,80 +128,26 @@ def export_drawing() -> Path:
     tmpl.EditableTexts = texts
     doc.recompute()
 
-    # Reason: use individual DrawViewPart objects for full position control.
-    # FreeCAD's DrawProjGroup.AutoDistribute doesn't know about the title
-    # block. We compute view sizes from the shape's bounding box projected
-    # along each view direction, then place each view explicitly.
-    sheet_w, sheet_h = SHEET_DIMS[spec["sheet_size"]]
-    margin_left, margin_top = 20, 10
-    padding = td.get("padding", 5)
-    gap = td.get("gap", 15)
-    title_block_h = 58  # ISO 5457
-    scale = td.get("scale", 1.0)
+    # Reason: compute view positions from bounding box + sheet config
+    from cad.drawing.layout import compute_layout
 
     bb = shape.BoundBox
-    usable_l = margin_left + padding
-    usable_r = sheet_w - margin_left - padding
-    usable_top_y = sheet_h - margin_top - padding
-    usable_bot_y = margin_top + title_block_h + padding
-    usable_w = usable_r - usable_l
-    usable_h = usable_top_y - usable_bot_y
     has_iso = "FrontTopRight" in td["projections"]
+    view_defs, scale = compute_layout(
+        bb.XLength,
+        bb.YLength,
+        bb.ZLength,
+        spec["sheet_size"],
+        td.get("scale", 1.0),
+        td.get("padding", 15),
+        td.get("gap", 20),
+        has_iso,
+    )
 
-    # Reason: compute view positions distributed across the full usable area.
-    # Left half: orthographic views (Top above Front, Right beside Front)
-    # Right half: Iso centered vertically as the visual anchor.
-    def _layout_at_scale(s):
-        fw, fh = bb.XLength * s, bb.ZLength * s
-        rw, _ = bb.YLength * s, bb.ZLength * s
-        _, th = bb.XLength * s, bb.YLength * s
-        iso_est = max(fw, fh) * 1.2
-
-        # Orthographic block: Top + gap + Front row (Front + gap + Right)
-        ortho_w = fw + gap + rw
-        ortho_h = th + gap + fh
-        total_w = ortho_w + (gap + iso_est if has_iso else 0)
-
-        # Reason: center orthographic block in left half, iso in right half.
-        if has_iso:
-            left_half_w = usable_w * 0.55  # ortho gets 55% of width
-            right_half_cx = usable_l + left_half_w + (usable_w - left_half_w) / 2
-        else:
-            left_half_w = usable_w
-
-        ortho_cx = usable_l + left_half_w / 2
-        ortho_cy = usable_bot_y + usable_h / 2
-
-        # Position views relative to orthographic center
-        front_cx = ortho_cx - (ortho_w / 2) + fw / 2
-        front_cy = ortho_cy - gap / 2
-        right_cx = front_cx + fw / 2 + gap + rw / 2
-        right_cy = front_cy
-        top_cx = front_cx
-        top_cy = front_cy + fh / 2 + gap + th / 2
-
-        defs = {
-            "FRONT": ((0, -1, 0), front_cx, front_cy),
-            "RIGHT": ((1, 0, 0), right_cx, right_cy),
-            "TOP": ((0, 0, 1), top_cx, top_cy),
-        }
-        if has_iso:
-            iso_cy = usable_bot_y + usable_h / 2
-            defs["ISOMETRIC"] = ((1, -1, 1), right_half_cx, iso_cy)
-
-        return defs, total_w, ortho_h
-
-    # Reason: auto-scale down if views don't fit the usable area.
-    view_defs, total_w, total_h = _layout_at_scale(scale)
-    if total_w > usable_w or total_h > usable_h:
-        fit_scale_w = usable_w / (total_w / scale)
-        fit_scale_h = usable_h / (total_h / scale)
-        scale = min(fit_scale_w, fit_scale_h) * 0.95
-        view_defs, total_w, total_h = _layout_at_scale(scale)
+    if scale != td.get("scale", 1.0):
         print(f"Auto-scaled to {scale:.2f} to fit {spec['sheet_size']} sheet")
 
-    # Reason: view labels, dimensions, and tolerances are added by /generate-gdt skill.
-    # This script handles view layout only.
+    view_objects = {}
     for name, (direction, cx, cy) in view_defs.items():
         v = doc.addObject("TechDraw::DrawViewPart", name)
         page.addView(v)
@@ -158,7 +156,16 @@ def export_drawing() -> Path:
         v.Scale = scale
         v.X = cx
         v.Y = cy
+        view_objects[name] = v
     doc.recompute()
+
+    # Reason: HLR runs asynchronously — wait for edges before dimensioning.
+    _wait_for_gui(10)
+
+    from cad.drawing.dimensions import add_dimensions
+
+    dim_names = add_dimensions(doc, page, view_objects)
+    print(f"Added dimensions: {dim_names}")
 
     # Update scale field in title block
     if scale >= 1:
@@ -171,24 +178,26 @@ def export_drawing() -> Path:
     # Force Qt scene graph to render template border + title block
     page.ViewObject.ForceUpdate = True
     page.ViewObject.doubleClicked()
-    for _ in range(15):
-        Gui.updateGui()
-        time.sleep(0.3)
+    _wait_for_gui(15)
 
-    svg_path = DRAWINGS_DIR / "l_bracket_sheet.svg"
-    pdf_path = DRAWINGS_DIR / "l_bracket.pdf"
+    svg_path = Path("/tmp/l_bracket_sheet.svg")
+    pdf_path = DRAWINGS_DIR / "l_bracket_drawing.pdf"
+    dxf_path = DRAWINGS_DIR / "l_bracket.dxf"
 
     TechDrawGui.exportPageAsSvg(page, str(svg_path))
 
-    # Reason: rsvg-convert preserves SVG stroke widths. TechDraw's
-    # exportPageAsPdf uses QPdfWriter which inflates line weights.
+    # Reason: strip template (border + title block) for a clean web SVG.
+    web_svg = DRAWINGS_DIR / "l_bracket_web.svg"
+    _export_web_svg(svg_path, web_svg)
+    _export_dark_svg(web_svg, DRAWINGS_DIR / "l_bracket_web_dark.svg")
+
+    # Reason: exportPageAsPdf strokes template text incorrectly (FreeCAD #21096).
+    # SVG→rsvg-convert renders title block text at correct weight.
     subprocess.run(
         ["rsvg-convert", "-f", "pdf", str(svg_path), "-o", str(pdf_path)],
         check=True,
     )
 
-    # DXF export for CNC shops — geometry + dimensions, no title block
-    dxf_path = DRAWINGS_DIR / "l_bracket.dxf"
     import TechDraw
 
     TechDraw.writeDXFPage(page, str(dxf_path))
