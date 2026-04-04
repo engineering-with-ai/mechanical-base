@@ -96,48 +96,60 @@ def export_drawing() -> Path:
     usable_h = usable_top_y - usable_bot_y
     has_iso = "FrontTopRight" in td["projections"]
 
-    # Reason: compute total layout extent at a given scale to check fit.
-    # Returns (view_defs, required_width, required_height).
+    # Reason: compute view positions distributed across the full usable area.
+    # Left half: orthographic views (Top above Front, Right beside Front)
+    # Right half: Iso centered vertically as the visual anchor.
     def _layout_at_scale(s):
         fw, fh = bb.XLength * s, bb.ZLength * s
         rw, _ = bb.YLength * s, bb.ZLength * s
         _, th = bb.XLength * s, bb.YLength * s
         iso_est = max(fw, fh) * 1.2
 
-        # Width: Right + gap + Front + gap + (Iso if present)
-        total_w = fw + gap + rw
-        if has_iso:
-            total_w += gap + iso_est
-        # Height: Top + gap + Front (Front and Right share the row)
-        total_h = th + gap + fh
+        # Orthographic block: Top + gap + Front row (Front + gap + Right)
+        ortho_w = fw + gap + rw
+        ortho_h = th + gap + fh
+        total_w = ortho_w + (gap + iso_est if has_iso else 0)
 
-        # Compute positions (Y-up coordinate system)
-        top_cy = usable_top_y - th / 2
-        front_cy = top_cy - th / 2 - gap - fh / 2
-        front_cx = usable_l + fw / 2
+        # Reason: center orthographic block in left half, iso in right half.
+        if has_iso:
+            left_half_w = usable_w * 0.55  # ortho gets 55% of width
+            right_half_cx = usable_l + left_half_w + (usable_w - left_half_w) / 2
+        else:
+            left_half_w = usable_w
+
+        ortho_cx = usable_l + left_half_w / 2
+        ortho_cy = usable_bot_y + usable_h / 2
+
+        # Position views relative to orthographic center
+        front_cx = ortho_cx - (ortho_w / 2) + fw / 2
+        front_cy = ortho_cy - gap / 2
         right_cx = front_cx + fw / 2 + gap + rw / 2
+        right_cy = front_cy
+        top_cx = front_cx
+        top_cy = front_cy + fh / 2 + gap + th / 2
 
         defs = {
-            "Front": ((0, -1, 0), front_cx, front_cy),
-            "Right": ((1, 0, 0), right_cx, front_cy),
-            "Top": ((0, 0, 1), front_cx, top_cy),
+            "FRONT": ((0, -1, 0), front_cx, front_cy),
+            "RIGHT": ((1, 0, 0), right_cx, right_cy),
+            "TOP": ((0, 0, 1), top_cx, top_cy),
         }
         if has_iso:
-            iso_cx = right_cx + rw / 2 + gap + iso_est / 2
-            defs["Iso"] = ((1, -1, 1), iso_cx, front_cy)
+            iso_cy = usable_bot_y + usable_h / 2
+            defs["ISOMETRIC"] = ((1, -1, 1), right_half_cx, iso_cy)
 
-        return defs, total_w, total_h
+        return defs, total_w, ortho_h
 
     # Reason: auto-scale down if views don't fit the usable area.
-    # Try the requested scale first; if it overflows, shrink to fit.
     view_defs, total_w, total_h = _layout_at_scale(scale)
     if total_w > usable_w or total_h > usable_h:
         fit_scale_w = usable_w / (total_w / scale)
         fit_scale_h = usable_h / (total_h / scale)
-        scale = min(fit_scale_w, fit_scale_h) * 0.95  # 5% margin
+        scale = min(fit_scale_w, fit_scale_h) * 0.95
         view_defs, total_w, total_h = _layout_at_scale(scale)
         print(f"Auto-scaled to {scale:.2f} to fit {spec['sheet_size']} sheet")
 
+    # Reason: view labels, dimensions, and tolerances are added by /generate-gdt skill.
+    # This script handles view layout only.
     for name, (direction, cx, cy) in view_defs.items():
         v = doc.addObject("TechDraw::DrawViewPart", name)
         page.addView(v)
