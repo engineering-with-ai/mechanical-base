@@ -9,7 +9,7 @@ An engineer sizing a mounting bracket needs to confirm that the bolts and bracke
 
 **[View generated deliverables](output/)**
 
-## Bracket Spec
+## 📋 Bracket Spec
 
 ```mermaid
 graph LR
@@ -29,7 +29,7 @@ graph LR
 
 Material: Nylon PA12 (HP Multi Jet Fusion) — E = 1.7 GPa, tensile strength = 48 MPa
 
-## Workflow
+## 🔄 Workflow
 
 ```
 theory.ipynb (sympy + pint) -> cad/model/model.py (CadQuery -> STEP) -> sim/model.py (pygccx -> CalculiX FEM) -> pytest (assert FEM matches theory)
@@ -42,7 +42,7 @@ theory.ipynb (sympy + pint) -> cad/model/model.py (CadQuery -> STEP) -> sim/mode
 5. `sim/test_run.py` asserts FEM bolt force matches hand calc within 35%, stress below yield
 6. `/generate-gdt` refines dimension presentation on the manufacturing drawing
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 uv sync
@@ -54,7 +54,7 @@ uv run poe validate-model   # BRep validity + bbox vs constants
 uv run poe validate-asm     # assembly validation
 ```
 
-## Code to Fabrication
+## 🏭 Code to Fabrication
 
 ```
  1. uv run poe build                 → CadQuery parametric L-bracket STEP
@@ -70,7 +70,7 @@ uv run poe validate-asm     # assembly validation
  6. uv run poe generate-asm          → assembly STEP to output/fab/
 ```
 
-## Structure
+## 📁 Structure
 
 - `theory.ipynb` — sympy bolt group derivation, pint + uncertainties, expected values
 - `sim/` — simulation + pytest assertions against theory
