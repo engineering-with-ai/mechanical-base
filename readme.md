@@ -57,15 +57,18 @@ uv run poe validate-asm     # assembly validation
 ## Code to Fabrication
 
 ```
-build -> sim -> validate-model -> generate-model -> validate-asm -> generate-asm
-```
+ 1. uv run poe build                 → CadQuery parametric L-bracket STEP
+ 2. uv run poe sim                   → FEM simulation + assertions (2/2 pass)
+ 3. uv run poe validate-model        → BRep validity + bounding box vs constants
+ 4. uv run poe generate-model        → GD&T drawing (PDF + web SVG + dark SVG + DXF)
 
-1. `uv run poe build` — CadQuery generates parametric L-bracket STEP
-2. `uv run poe sim` — FEM simulation + assertions (2/2 pass)
-3. `uv run poe validate-model` — BRep validity + bounding box vs constants
-4. `uv run poe generate-model` — GD&T dimensioned drawing (PDF + web SVG + dark SVG + DXF)
-5. `uv run poe validate-asm` — assembly validation
-6. `uv run poe generate-asm` — assembly STEP to `output/fab/`
+    ┌──────────────────────────────────────────────────────┐
+    │  HUMAN: review drawing, run /generate-gdt to refine │
+    └──────────────────────────────────────────────────────┘
+
+ 5. uv run poe validate-asm          → assembly validation
+ 6. uv run poe generate-asm          → assembly STEP to output/fab/
+```
 
 ## Structure
 
