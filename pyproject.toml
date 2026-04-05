@@ -34,7 +34,7 @@ checks = ["format", "lint"]
 notebook = "jupyter nbconvert --execute --inplace theory.ipynb"
 build = { cmd = "python cad/model/model.py", env = { PYTHONPATH = "." } }
 inspect-model = "bash -c 'nohup freecad cad/l_bracket.step &>/dev/null &'"
-inspect-asm = { cmd = "python cad/model/assembly.py && nohup freecad cad/l_bracket_assy.step &>/dev/null &", env = { PYTHONPATH = "." } }
+inspect-asm = "bash -c 'PYTHONPATH=. python cad/model/assembly.py && nohup freecad cad/l_bracket_assy.step &>/dev/null &'"
 generate-model = "bash -c 'mkdir -p output/drawings && DISPLAY= PYTHONPATH=/usr/lib/freecad/lib:. xvfb-run -a python3 cad/drawing/export_drawing.py'"
 generate-asm = { cmd = "bash -c 'mkdir -p output/fab && python cad/model/assembly.py && cp cad/l_bracket.step output/fab/ && cp cad/l_bracket_assy.step output/fab/ && echo \"Copied STEP + assembly to output/fab/\"'", env = { PYTHONPATH = "." } }
 validate-model = { cmd = "python cad/model/validate_model.py", env = { PYTHONPATH = "." } }
