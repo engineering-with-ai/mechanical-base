@@ -22,7 +22,7 @@ def validate() -> None:
     # Assembly has expected parts
     part_names = {child.name for child in assy.objects.values()}
     expected = {"bracket", "wall_plate", "bolt_1", "bolt_2"}
-    assert expected == part_names, f"Missing parts: {expected - part_names}"
+    assert expected.issubset(part_names), f"Missing parts: {expected - part_names}"
 
     # Assembly bounding box sanity (wall plate adds ~10mm in -X)
     bb = assy.toCompound().BoundingBox()

@@ -3,7 +3,7 @@
 ![](https://img.shields.io/gitlab/pipeline-status/engineering-with-ai/mechanical-model?branch=main&logo=gitlab)
 ![](https://gitlab.com/engineering-with-ai/mechanical-model/badges/main/coverage.svg)
 
-L-bracket bolted connection — verifies bolt reaction forces and bracket stress for a Nylon PA12 (HP MJF) L-bracket bolted to a wall plate under a vertical point load.
+L-bracket bolted connection — verifies bolt reaction forces and bracket stress for an ASTM A36 steel L-bracket bolted to a wall plate under a vertical point load.
 
 An engineer sizing a mounting bracket needs to confirm that the bolts and bracket meet strength requirements before fabrication. The bolt group hand calculation provides expected reaction forces (rigid bracket assumption). The CalculiX FEM simulation solves the same problem numerically on a 3D mesh. Agreement validates the model and toolchain; the bracket stress must remain below yield.
 
@@ -13,10 +13,10 @@ An engineer sizing a mounting bracket needs to confirm that the bolts and bracke
 
 ```mermaid
 graph LR
-    WALL["Wall Plate"] --- BOLTS["2x M8 Bolts<br/>40mm spacing"]
-    BOLTS --- VERT["Vertical Leg<br/>80 x 50 x 14mm"]
+    WALL["Wall Plate"] --- BOLTS["2x M8 Bolts<br/>50mm spacing"]
+    BOLTS --- VERT["Vertical Leg<br/>80 x 50 x 5mm"]
     VERT --- BEND["Fillet R8mm"]
-    BEND --- HORIZ["Horizontal Leg<br/>60 x 50 x 14mm"]
+    BEND --- HORIZ["Horizontal Leg<br/>60 x 50 x 5mm"]
     HORIZ --- LOAD["500N downward"]
 
     style WALL fill:#666,stroke:#333
@@ -27,7 +27,7 @@ graph LR
     style LOAD fill:#a94,stroke:#333
 ```
 
-Material: Nylon PA12 (HP Multi Jet Fusion) — E = 1.7 GPa, tensile strength = 48 MPa
+Material: ASTM A36 structural steel — E = 200 GPa, yield strength = 250 MPa
 
 ## 🔄 Workflow
 
